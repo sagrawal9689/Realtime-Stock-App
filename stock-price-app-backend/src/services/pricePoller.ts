@@ -11,30 +11,57 @@ interface ApiResponse {
 
 const fetchAndStorePrices = (io: Server) => {
   setInterval(async () => {
-    const apiUrl = 'https://api.coingecko.com/api/v3/simple/price';
-    const params = {
-      ids: 'bitcoin,ethereum,litecoin,chainlink,cardano',
-      vs_currencies: 'usd',
-    };
+    const apiUrl = 'https://api.livecoinwatch.com/coins/list';
 
     const headers = {
-      accept: 'application/json',
-      'x-cg-demo-api-key': 'CG-1mpcXwhDaCrUAdpjAR5fcduW',
+      'content-type': 'application/json',
+      'x-api-key': 'e24fc0f8-b32a-4a0c-96c8-79e6cf4e4c84',
+    };
+
+    const requestBody = {
+      currency: "USD",
+      sort: "rank",
+      order: "ascending",
+      offset: 0,
+      limit: 30,
+      meta: false
     };
 
     try {
-      const response = await axios.get<ApiResponse>(apiUrl, { params,headers });
-      const prices = response.data;
+      const response:any = await axios.post<ApiResponse>(apiUrl, requestBody ,{ headers });
 
-      console.log(prices,'prices')
+      // Mapping of cryptocurrency names to their codes
+      const symbolToCodeMapping = { 
+        "bitcoin": "BTC", 
+        "ethereum": "ETH", 
+        "litecoin": "LTC", 
+        "chainlink": "LINK", 
+        "cardano": "ADA" 
+      };
 
-      for (const [symbol, data] of Object.entries(prices)) {
-        const priceEntry = await Price.create({
-          symbol,
-          price: data.usd,
-        });
+      const codeToSymbolMapping = Object.fromEntries(
+        Object.entries(symbolToCodeMapping).map(([symbol, code]) => [code, symbol])
+      );
 
-        io.emit('priceUpdate', priceEntry);
+      const codesOfInterest = Object.values(symbolToCodeMapping);
+
+      const filteredData:any = response.data.filter((coin:any)=> codesOfInterest.includes(coin.code)).map((item:any) =>{
+        return {
+          symbol: codeToSymbolMapping[item.code],
+          price: item.rate
+        }
+      });
+      
+      console.log(filteredData,'filterdaata')
+
+      for(const coin of filteredData)
+      {
+          const priceEntry = await Price.create({
+            symbol: coin.symbol,
+            price: coin.price,
+          });
+  
+          io.emit('priceUpdate', priceEntry);
       }
     } catch (error:any) {
       if (error.response && error.response.status === 429) {
@@ -45,7 +72,7 @@ const fetchAndStorePrices = (io: Server) => {
         console.error('Error fetching or storing prices:', error);
       }
     }
-  }, 15000);
+  }, 5000);
 };
 
 export default fetchAndStorePrices;
