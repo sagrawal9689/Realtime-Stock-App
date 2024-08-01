@@ -9,16 +9,19 @@ const Table: React.FC = () => {
   const { pricesBySymbol, selectedSymbol, status, error } = useSelector((state: RootState) => state.prices);
   const prices = pricesBySymbol[selectedSymbol] || [];
 
-  useEffect(() => {
-    dispatch(fetchPrices(selectedSymbol)); // Fetch initial data
-
+  useEffect(()=>{
     // Initialize WebSocket connection
     initializeWebSocket(dispatch);
-
+  
     // Clean up WebSocket connection on component unmount
     return () => {
       disconnectWebSocket();
     };
+  },[])
+
+  useEffect(() => {
+    dispatch(fetchPrices(selectedSymbol)); // Fetch initial data
+
   }, [dispatch, selectedSymbol]);
 
   if (status === 'loading') return <p>Loading...</p>;

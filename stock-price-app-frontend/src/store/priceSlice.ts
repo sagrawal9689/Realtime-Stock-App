@@ -25,7 +25,6 @@ export const fetchPrices = createAsyncThunk(
   'prices/fetchPrices',
   async (symbol: string) => {
     const response = await axios.get(`http://localhost:5000/api/prices/${symbol}`);
-    console.log(response,'res')
     return { symbol, prices: response.data };
   }
 );

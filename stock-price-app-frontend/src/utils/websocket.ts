@@ -10,7 +10,6 @@ export const initializeWebSocket = (dispatch: AppDispatch) => {
   socket = io('ws://localhost:5000'); // Replace with your WebSocket server URL
 
   socket.on('priceUpdate', (data: any) => {
-    console.log(data,'data on price update')
     dispatch(setPrices(data));
   });
 
